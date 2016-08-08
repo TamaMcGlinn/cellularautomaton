@@ -20,7 +20,7 @@ using namespace cv;
 
 string window_name_begin = "Cellular Automaton: ";
 int cellSize; unsigned long config;
-const int numberOfPlates = 2;
+int numberOfPlates = 2;
 
 //input
 void interactive_threshold(Mat & data);
@@ -52,6 +52,10 @@ int main ( int argc, char** argv )
 		}
 	}
 	string window_name = window_name_begin + to_string(config);
+	
+	cout << "Specify the number of plates to use:" << endl;
+	cin >> numberOfPlates;
+
 	std::vector<CellularAutomaton> plates;
 	for(int i = 0; i < numberOfPlates; ++i){
 		plates.push_back(CellularAutomaton(config));
@@ -136,11 +140,12 @@ int main ( int argc, char** argv )
 		}
 		
 		if(!paused || step){
+			float weight = 1.0f / numberOfPlates;
+			average = cv::Scalar(0,0,0);
 			for(int i = 0; i < numberOfPlates; ++i){
 				plates[i].timestep();
+				scaleAdd(plates[i].getMatrix(), weight, average, average);
 			}
-			float weight = 1.0f / numberOfPlates;
-			addWeighted( plates[0].getMatrix(), weight, plates[1].getMatrix(), weight, 0.0, average);
 			if(displayTicks){
 				cout << '>' << flush;
 			}
