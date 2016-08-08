@@ -40,9 +40,10 @@ int main ( int argc, char** argv )
 		config = 6152;
 	} else {
 		getBitString(config, argv[1]);
-		if(argv[1][18] != '\0'){
-			cout << "Bitstring too long. You must specify an 18 bit string." << endl;
-			exit(1);
+		int length = strlen(argv[1]);
+		if( length != 18 ){
+			cout << "That's " << length << " bits. You must specify an 18 bit string." << endl;
+			exit(0);
 		}
 	}
 	string window_name = window_name_begin + to_string(config);
