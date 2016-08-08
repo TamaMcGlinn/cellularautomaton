@@ -3,11 +3,15 @@ This project shows how to use OpenCV imagefilters to process cellular automata o
 # Installation
 
 Prerequisites:
-```git build-essential cmake opencv```
+
+```
+git build-essential cmake opencv
+```
 
 For example, on debian based systems such as Ubuntu, use:
 
-```sudo apt-get install git build-essential cmake libopencv-dev
+```
+sudo apt-get install git build-essential cmake libopencv-dev
 export OpenCV_DIR=/usr/share/OpenCV
 git clone git@github.com:TamaHobbit/cellularautomaton.git
 cd cellularautomaton
@@ -20,7 +24,8 @@ make
 
 Running the program without arguments explains its usage:
 
-```carmen@serenity:~/code/opencv/CellularAutomaton/build-linux$ ./CA
+```
+carmen@serenity:~/code/opencv/CellularAutomaton/build-linux$ ./CA
 Defaulting to Life. To do a custom Cellular Automaton, run:
 ./CA [18-bit binary string]
 The first 9 bits specify when a live bit survives, the second 9 bits specify when a dead bit is born. From left to right, the first of these nine means there are 8 live neighbours, while the last means there are none. For example, 000001100000001000 is Life.
@@ -57,4 +62,5 @@ Gtk-Message: Failed to load module "canberra-gtk-module"
 >>Delay: 50 milliseconds
 >>>>>>Delay: 0 milliseconds
 >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>No key binding for: 113
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>```
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+```
