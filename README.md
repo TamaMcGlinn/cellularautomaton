@@ -6,6 +6,7 @@ Prerequisites:
 ```git build-essential cmake opencv```
 
 For example, on debian based systems such as Ubuntu, use:
+
 ```sudo apt-get install git build-essential cmake libopencv-dev
 export OpenCV_DIR=/usr/share/OpenCV
 git clone git@github.com:TamaHobbit/cellularautomaton.git
