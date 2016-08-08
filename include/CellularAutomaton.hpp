@@ -28,7 +28,7 @@ public:
 	CellularAutomaton(bitset<18> rule);
 	void setAutomaton(bitset<18> new_rule);
 	void setMat(Mat & seed);
-	void setRand(int width, int height, int millentage);
+	void setRand(int width, int height, int millentage, int seed);
 
 	void timestep();
 	bool timestep_checkChange();

@@ -14,15 +14,14 @@ void CellularAutomaton::setMat(Mat & seed){
 	m_data = seed;//not a real copy! Just point to seed
 }
 
-void CellularAutomaton::setRand(int width, int height, int millentage){
+void CellularAutomaton::setRand(int width, int height, int millentage, int seed){
 	m_data.create(height, width, CV_8U);
 	if(millentage == 1000){ //because cv::threshold cannot accept all pixel values
 		m_data = Mat::ones(width, height, m_data.type())*255;
 	} else {
 		millentage /= 4;
 		//get a random grayscale randomly distributed in range (0, 250>
-		int seed = time(NULL);
-		cout << seed << endl;
+		cout << "Seed chosen: " << seed << endl;
 		cv::theRNG().state = seed;
 		randu(m_data, Scalar(0), Scalar(250));
 		//anything *higher* than the threshold is live, so the higher the live_percentage, the

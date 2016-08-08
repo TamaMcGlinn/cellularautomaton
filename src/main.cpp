@@ -8,6 +8,10 @@ using std::cin;
 using std::to_string;
 using std::flush;
 
+#include <vector>
+#include <chrono>
+#include <thread>
+
 #include "opencv2/imgproc/imgproc.hpp"
 #include "opencv2/highgui/highgui.hpp"
 using namespace cv;
@@ -16,10 +20,11 @@ using namespace cv;
 
 string window_name_begin = "Cellular Automaton: ";
 int cellSize; unsigned long config;
+const int numberOfPlates = 2;
 
 //input
 void interactive_threshold(Mat & data);
-void interactive_getSeed(CellularAutomaton & demo);
+void interactive_getSeed(std::vector<CellularAutomaton> & plates);
 void getBitString(unsigned long & config, const char * userInput);
 
 //output
@@ -47,17 +52,23 @@ int main ( int argc, char** argv )
 		}
 	}
 	string window_name = window_name_begin + to_string(config);
-	CellularAutomaton demo(config);
-	//demo.setRand(100);//setup 10% live cells
+	std::vector<CellularAutomaton> plates;
+	for(int i = 0; i < numberOfPlates; ++i){
+		plates.push_back(CellularAutomaton(config));
+	}
 	
-	interactive_getSeed(demo);
+	interactive_getSeed(plates);
 	
 	printControls();
 	
 	bool paused = true;
 	bool displayTicks = true;
 	int delay = 250;
-	Mat img(demo.getMatrix().rows*cellSize, demo.getMatrix().cols*cellSize, CV_8U); //display is resized version of data
+	auto firstMatrix = plates[0].getMatrix();
+	int rows = firstMatrix.rows;
+	int cols = firstMatrix.cols;
+	Mat average(rows,cols,CV_8U);
+	Mat img(rows*cellSize, cols*cellSize, CV_8U); //display is resized version of average data
 	while( true ){
 		int keyPressed = waitKey(30 + delay);
 		bool step = false;
@@ -74,22 +85,33 @@ int main ( int argc, char** argv )
 				string newCAstring;
 				cin >> newCAstring;
 				getBitString(config, newCAstring.c_str());
-				demo.setAutomaton(config);
+				for(int i = 0; i < numberOfPlates; ++i){
+					plates[i].setAutomaton(config);
+				}
 				cvDestroyWindow(window_name.c_str());
 				window_name = window_name_begin + to_string(config);
+
 				paused = true;
 			} else if(keyPressed == 102){ // 'f'
 				cout << "Ticks to run simulation: ";
 				int ticks;
 				cin >> ticks;
 				for(int i = 0; i < ticks; i++){
-					demo.timestep();
+					for(int i = 0; i < numberOfPlates; ++i){
+						plates[i].timestep();
+					}
 					if(displayTicks){
 						cout << '>' << flush;
 					}
 				}
 			} else if(keyPressed == 119){ // 'w'
-				while(demo.timestep_checkChange());
+				bool anyChange;
+				do {
+					anyChange = false;
+					for(int i = 0; i < numberOfPlates; ++i){
+						anyChange |= plates[i].timestep_checkChange();
+					}
+				} while(anyChange);
 			} else if(keyPressed == 118){ // 'v'
 				displayTicks = !displayTicks;
 			} else if(keyPressed == 115){ // 's'
@@ -114,7 +136,11 @@ int main ( int argc, char** argv )
 		}
 		
 		if(!paused || step){
-			demo.timestep();
+			for(int i = 0; i < numberOfPlates; ++i){
+				plates[i].timestep();
+			}
+			float weight = 1.0f / numberOfPlates;
+			addWeighted( plates[0].getMatrix(), weight, plates[1].getMatrix(), weight, 0.0, average);
 			if(displayTicks){
 				cout << '>' << flush;
 			}
@@ -122,7 +148,8 @@ int main ( int argc, char** argv )
 		}
 		
 		//Size(0,0) indicates to handle input size automatically
-		resize( demo.getMatrix(), img, Size(0,0), static_cast<double>(cellSize), static_cast<double>(cellSize), INTER_NEAREST );
+		resize( average, img, Size(0,0), static_cast<double>(cellSize), static_cast<double>(cellSize), INTER_NEAREST );
+
 		imshow( window_name.c_str(), img );
 	}
 	cout << endl;
@@ -139,8 +166,7 @@ void interactive_threshold(Mat & img){
 	threshold(img, img, threshold_value, 255, THRESH_BINARY);
 }
 
-void interactive_getSeed(CellularAutomaton & demo){
-	Mat seed;
+void interactive_getSeed(std::vector<CellularAutomaton> & plates){
 	cout << "Type a letter to choose how to seed the matrix: " << endl
 			<< "c: Use a camera capture." << endl
 			<< "i: Seed from image." << endl
@@ -160,44 +186,47 @@ void interactive_getSeed(CellularAutomaton & demo){
 			cout << "Enter image height: ";
 			cin >> im_height;
 			
-			seed.create(Size(im_width, im_height), 0);
-			
 			int live_percentage;
 			cout << "Enter the millentage of cells that start alive (0-1000): ";
 			cin >> live_percentage;
-			demo.setRand(im_width, im_height, live_percentage);
+			for(int i = 0; i < numberOfPlates; ++i){
+				plates[i].setRand(im_width, im_height, live_percentage, cv::getTickCount() + i);
+			}
 			break;
 		} else { //choices where the image is viewed, and cellsize and threshold determines the seed matrix
-			if(choice == 'c'){
-				//capture camera image
-				VideoCapture capture(0);
-				if(!capture.isOpened()){  // check if we succeeded
-					cerr << "Could not capture from camera." << endl;
-					exit(1);
-				}
-				capture >> seed;
-			} else if(choice == 'i'){
-				string image_path;
-				cout << "Enter the path to the image (relative or absolute): ";
-				cin >> image_path;
+			for(int i = 0; i < numberOfPlates; ++i){
+				Mat seed;
+				if(choice == 'c'){
+					//capture camera image
+					VideoCapture capture(0);
+					if(!capture.isOpened()){  // check if we succeeded
+						cerr << "Could not capture from camera." << endl;
+						exit(1);
+					}
+					capture >> seed;
+					std::this_thread::sleep_for(std::chrono::milliseconds(200));
+				} else if(choice == 'i'){
+					string image_path;
+					cout << "Enter the path to image " << i+1 << "/" << numberOfPlates << " (relative or absolute): ";
+					cin >> image_path;
 				
-				seed = imread( image_path.c_str(), 0 );
-				if( !seed.data ){
-					cerr << "Invalid image supplied." << endl;
-					exit(1);
+					seed = imread( image_path.c_str(), 0 );
+					if( !seed.data ){
+						cerr << "Invalid image supplied." << endl;
+						exit(1);
+					}
 				}
-			}
 			
-			resize( seed, seed, Size(0,0), 1.0/static_cast<double>(cellSize), 1.0/static_cast<double>(cellSize), INTER_NEAREST );
-			Mat img;
-			resize( seed, img, Size(0,0), static_cast<double>(cellSize), static_cast<double>(cellSize), INTER_NEAREST );
+				//resize( seed, seed, Size(0,0), 1.0/static_cast<double>(cellSize), 1.0/static_cast<double>(cellSize), INTER_NEAREST );
+				Mat img;
+				resize( seed, img, Size(0,0), static_cast<double>(cellSize), static_cast<double>(cellSize), INTER_NEAREST );
 			
-			displayImage(img, "Camera capture");
-			interactive_threshold(seed);
-			cvDestroyWindow("Camera capture");
+				displayImage(img, "Camera capture");
+				interactive_threshold(seed);
+				cvDestroyWindow("Camera capture");
 			
-			demo.setMat(seed);
-			
+				plates[i].setMat(seed);
+			}	
 			break;
 		}
 	}
