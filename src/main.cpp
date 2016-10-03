@@ -32,7 +32,6 @@ void displayImage(Mat & data, const char * cam_cap_title);
 void saveImage(Mat & frame);
 void printControls();
 
-/** @function main */
 int main ( int argc, char** argv )
 {
 	if(argc != 2){
@@ -65,9 +64,9 @@ int main ( int argc, char** argv )
 	
 	printControls();
 	
-	bool paused = true;
-	bool displayTicks = true;
-	int delay = 250;
+	bool paused = false;
+	bool displayTicks = false;
+	int delay = 0;
 	auto firstMatrix = plates[0].getMatrix();
 	int rows = firstMatrix.rows;
 	int cols = firstMatrix.cols;
@@ -140,11 +139,12 @@ int main ( int argc, char** argv )
 		}
 		
 		if(!paused || step){
-			float weight = 1.0f / numberOfPlates;
+			float weight = 0.5f;
 			average = cv::Scalar(0,0,0);
 			for(int i = 0; i < numberOfPlates; ++i){
 				plates[i].timestep();
 				scaleAdd(plates[i].getMatrix(), weight, average, average);
+				weight /= 2f;
 			}
 			if(displayTicks){
 				cout << '>' << flush;
